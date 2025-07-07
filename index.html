@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Gantt Chart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6b7280;
+        }
+
+        .add-task-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 24px;
+            transition: background-color 0.2s;
+        }
+
+        .add-task-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .add-form {
+            display: none;
+            background-color: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+
+        .add-form.show {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .add-btn {
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .add-btn:hover {
+            background-color: #059669;
+        }
+
+        .gantt-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .gantt-header {
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timeline-header {
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            height: 48px;
+        }
+
+        .task-labels {
+            width: 300px;
+            border-right: 1px solid #e5e7eb;
+            background-color: white;
+        }
+
+        .timeline-dates {
+            flex: 1;
+            display: flex;
+        }
+
+        .date-column {
+            flex: 1;
+            border-right: 1px solid #e5e7eb;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .task-row {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .task-row:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .task-info {
+            width: 300px;
+            padding: 16px;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .task-name {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .task-details {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-slider {
+            width: 60px;
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .task-timeline {
+            flex: 1;
+            padding: 16px 8px;
+            position: relative;
+        }
+
+        .task-bar {
+            height: 24px;
+            border-radius: 4px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.8;
+        }
+
+        .task-progress {
+            height: 24px;
+            border-radius: 4px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .task-dates {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .delete-btn:hover {
+            background-color: #fee2e2;
+        }
+
+        .legend {
+            margin-top: 24px;
+            background-color: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .legend h3 {
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .legend-item {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .legend-item strong {
+            color: #111827;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Project Gantt Chart</h1>
+            <p>Track project progress and timelines</p>
+        </div>
+
+        <button class="add-task-btn" onclick="toggleAddForm()">
+            ➕ Add Task
+        </button>
+
+        <div class="add-form" id="addForm">
+            <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 600;">Add New Task</h3>
+            <div class="form-grid">
+                <input type="text" class="form-input" id="taskName" placeholder="Task Name">
+                <input type="date" class="form-input" id="startDate">
+                <input type="date" class="form-input" id="endDate">
+                <input type="text" class="form-input" id="assignee" placeholder="Assignee">
+                <input type="color" class="form-input" id="taskColor" value="#3B82F6">
+                <button class="add-btn" onclick="addTask()">Add Task</button>
+            </div>
+        </div>
+
+        <div class="gantt-container">
+            <div class="gantt-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>📅</span>
+                    <span style="font-weight: 600;">Timeline</span>
+                </div>
+                <span style="font-size: 14px; color: #6b7280;">Jan 2025 - Apr 2025</span>
+            </div>
+
+            <div class="timeline-header">
+                <div class="task-labels" style="display: flex; align-items: center; padding: 0 16px;">
+                    <span style="font-weight: 600;">Tasks</span>
+                </div>
+                <div class="timeline-dates" id="timelineDates"></div>
+            </div>
+
+            <div id="taskList"></div>
+        </div>
+
+        <div class="legend">
+            <h3>How to Use</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <strong>Add Tasks:</strong> Click "Add Task" to create new project tasks with dates and assignees.
+                </div>
+                <div class="legend-item">
+                    <strong>Track Progress:</strong> Use the progress sliders to update task completion status.
+                </div>
+                <div class="legend-item">
+                    <strong>Visual Timeline:</strong> Task bars show duration and overlap to identify dependencies.
+                </div>
+                <div class="legend-item">
+                    <strong>Manage Tasks:</strong> Delete tasks using the ❌ button next to each task.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [
+            {
+                id: 1,
+                name: "Project Planning",
+                startDate: "2025-01-15",
+                endDate: "2025-01-25",
+                assignee: "John Doe",
+                color: "#3B82F6",
+                progress: 100
+            },
+            {
+                id: 2,
+                name: "Design Phase",
+                startDate: "2025-01-20",
+                endDate: "2025-02-10",
+                assignee: "Jane Smith",
+                color: "#10B981",
+                progress: 75
+            },
+            {
+                id: 3,
+                name: "Development",
+                startDate: "2025-02-01",
+                endDate: "2025-03-15",
+                assignee: "Mike Johnson",
+                color: "#F59E0B",
+                progress: 45
+            },
+            {
+                id: 4,
+                name: "Testing",
+                startDate: "2025-03-01",
+                endDate: "2025-03-20",
+                assignee: "Sarah Wilson",
+                color: "#EF4444",
+                progress: 20
+            },
+            {
+                id: 5,
+                name: "Deployment",
+                startDate: "2025-03-15",
+                endDate: "2025-03-25",
+                assignee: "Alex Brown",
+                color: "#8B5CF6",
+                progress: 0
+            }
+        ];
+
+        function generateDates() {
+            const dates = [];
+            const start = new Date('2025-01-01');
+            const end = new Date('2025-04-01');
+            
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 7)) {
+                dates.push(new Date(d));
+            }
+            return dates;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function calculateTaskPosition(task) {
+            const chartStart = new Date('2025-01-01');
+            const chartEnd = new Date('2025-04-01');
+            const taskStart = new Date(task.startDate);
+            const taskEnd = new Date(task.endDate);
+            
+            const chartDuration = (chartEnd - chartStart) / (1000 * 60 * 60 * 24);
+            const taskStartOffset = (taskStart - chartStart) / (1000 * 60 * 60 * 24);
+            const taskDuration = (taskEnd - taskStart) / (1000 * 60 * 60 * 24);
+            
+            const left = (taskStartOffset / chartDuration) * 100;
+            const width = (taskDuration / chartDuration) * 100;
+            
+            return { left, width };
+        }
+
+        function renderTimeline() {
+            const dates = generateDates();
+            const timelineDates = document.getElementById('timelineDates');
+            timelineDates.innerHTML = '';
+            
+            dates.forEach(date => {
+                const dateColumn = document.createElement('div');
+                dateColumn.className = 'date-column';
+                dateColumn.textContent = formatDate(date);
+                timelineDates.appendChild(dateColumn);
+            });
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const position = calculateTaskPosition(task);
+                const duration = Math.ceil((new Date(task.endDate) - new Date(task.startDate)) / (1000 * 60 * 60 * 24));
+                
+                const taskRow = document.createElement('div');
+                taskRow.className = 'task-row';
+                
+                taskRow.innerHTML = `
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-details">
+                            👤 ${task.assignee} • ⏰ ${duration} days
+                        </div>
+                        <div class="progress-container">
+                            <span class="progress-text">Progress:</span>
+                            <input type="range" class="progress-slider" min="0" max="100" value="${task.progress}" 
+                                   onchange="updateProgress(${task.id}, this.value)">
+                            <span class="progress-text">${task.progress}%</span>
+                            <button class="delete-btn" onclick="deleteTask(${task.id})">❌</button>
+                        </div>
+                    </div>
+                    <div class="task-timeline">
+                        <div class="task-bar" style="left: ${position.left}%; width: ${position.width}%; background-color: ${task.color}; opacity: 0.3;"></div>
+                        <div class="task-progress" style="left: ${position.left}%; width: ${position.width * (task.progress / 100)}%; background-color: ${task.color};"></div>
+                        <div class="task-dates">${formatDate(task.startDate)} - ${formatDate(task.endDate)}</div>
+                    </div>
+                `;
+                
+                taskList.appendChild(taskRow);
+            });
+        }
+
+        function toggleAddForm() {
+            const form = document.getElementById('addForm');
+            form.classList.toggle('show');
+        }
+
+        function addTask() {
+            const name = document.getElementById('taskName').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const assignee = document.getElementById('assignee').value;
+            const color = document.getElementById('taskColor').value;
+            
+            if (name && startDate && endDate) {
+                const newTask = {
+                    id: Date.now(),
+                    name,
+                    startDate,
+                    endDate,
+                    assignee: assignee || 'Unassigned',
+                    color,
+                    progress: 0
+                };
+                
+                tasks.push(newTask);
+                renderTasks();
+                
+                // Clear form
+                document.getElementById('taskName').value = '';
+                document.getElementById('startDate').value = '';
+                document.getElementById('endDate').value = '';
+                document.getElementById('assignee').value = '';
+                document.getElementById('taskColor').value = '#3B82F6';
+                
+                toggleAddForm();
+            } else {
+                alert('Please fill in task name, start date, and end date.');
+            }
+        }
+
+        function updateProgress(taskId, newProgress) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.progress = parseInt(newProgress);
+                renderTasks();
+            }
+        }
+
+        function deleteTask(taskId) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            renderTasks();
+        }
+
+        // Initialize the chart
+        renderTimeline();
+        renderTasks();
+    </script>
+</body>
+</html>
